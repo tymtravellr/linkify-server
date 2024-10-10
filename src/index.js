@@ -1,15 +1,20 @@
 const express = require('express');
-const app = express("cors");
-const cors = require
+const cors = require('cors');
+const connectDB = require('./config/dbConnection');
+const corsOptions = require('./config/corsOptions');
+const cookieParser = require('cookie-parser');
 
-const PORT = 8080 || process.env.PORT;
+const app = express();
+const PORT = 5000;
 
-app.use(cors())
+connectDB();
 
-app.get("/", (req, res) => {
-    res.send("Hello World");
-})
+app.use(cors(corsOptions))
+app.use(express.json())
+app.use(cookieParser())
+app.use('/', require('./routes/root'))
+app.use('/user', require('./routes/authRoute'))
 
 app.listen(PORT, () => {
-    console.log('Server is running')
-})
+    console.log(`Server is running on port ${PORT}`);
+});
