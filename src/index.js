@@ -13,7 +13,7 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
 
-app.use('/api/', require('./routes/root'))
+app.use('/', require('./routes/root'))
 app.use('/api/auth', require('./routes/authRoute'))
 app.use('/api/user', require('./routes/userRoute'))
 
