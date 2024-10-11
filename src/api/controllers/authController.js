@@ -3,8 +3,6 @@ const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 
-const JWT_SECRET = 'ab3cf1f1126aa5340deebf1dd8f5873dc1a63c261240ec200907b86b0758e351d1dd74d330e0a19075b18cc70316336c1b399558665a99e1cb75161e0c754d9c'
-
 const registerUser = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
 
@@ -58,14 +56,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
 const loginUser = asyncHandler(async (req, res, next) => {
     const { email, password } = req.body;
 
-    console.log('email:', email, 'password:', password);
-
-    // Include '+password' to explicitly select the password field
     const user = await User.findOne({ email }).select('+password');
-
     if (!user) {
         res.status(401).json({
-            message: 'Invalid credentials'
+            message: 'User not found'
         });
     }
 
@@ -87,15 +81,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
 });
 
 const generateToken = (user) => {
-    return jwt.sign(
-        {
-            id: user._id,
-        },
-        JWT_SECRET,
-        {
-            expiresIn: '24h',
-        }
-    );
+    return jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '24h', });
 };
 
 module.exports = { registerUser, loginUser };
