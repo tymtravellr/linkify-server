@@ -85,8 +85,6 @@ const updateLinks = asyncHandler(async (req, res) => {
     const { email } = req.params;
     const { links } = req.body;
 
-    console.log('links', links)
-
     try {
         const user = await User.findOne({ email });
         if (user) {
