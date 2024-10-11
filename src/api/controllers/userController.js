@@ -1,91 +1,118 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
-const crypto = require('crypto');
 
-const registerUser = asyncHandler(async (req, res, next) => {
-    const { email, password, isAdmin } = req.body;
-
-    if (!email || !password) {
-        next(ErrorHandler.validationError('Email and Password are required'));
-        return;
-    }
-
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-        next(ErrorHandler.conflict('User already exists'));
-        return;
-    }
+const viewUser = asyncHandler(async (req, res) => {
+    const { email } = req.params;
 
     try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const user = await User.create({
-            email,
-            password: hashedPassword,
-            isAdmin
-        });
+        const user = await User.findOne({ email });
 
         if (user) {
-            res.status(201).json({
-                _id: user._id,
+            const userData = {
                 email: user.email,
-                isAdmin: user.isAdmin,
-                token: generateToken(user)
-            });
+                firstName: user.firstName,
+                lastName: user.lastName,
+                image: user.image,
+                links: user.links
+            }
+            return res.status(200).json({
+                message: 'User',
+                userData
+            })
+        } else {
+            return res.status(404).json({
+                message: 'User not found'
+            })
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Server error'
+        })
+    }
+});
+
+const getUser = asyncHandler(async (req, res) => {
+    const { email } = req.params;
+
+    try {
+        const user = await User.findOne({ email });
+        if (user) {
+            return res.status(200).json({
+                message: 'User',
+                user
+            })
+        } else {
+            return res.status(404).json({
+                message: 'User not found'
+            })
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Server error'
+        })
+    }
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+    const { email } = req.params;
+    const { firstName, lastName, image } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (user) {
+            user.firstName = firstName || user.firstName;
+            user.lastName = lastName || user.lastName;
+            user.image = image || user.image;
+
+            await user.save();
+            return res.status(200).json({
+                message: 'User updated',
+                user
+            })
+        } else {
+            return res.status(404).json({
+                message: 'User not found'
+            })
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Server error'
+        })
+    }
+});
+
+const updateLinks = asyncHandler(async (req, res) => {
+    const { email } = req.params;
+    const { links } = req.body;
+
+    console.log('links', links)
+
+    try {
+        const user = await User.findOne({ email });
+        if (user) {
+            user.links = links;
+
+            await user.save();
+            return res.status(200).json({
+                message: 'User updated',
+                user
+            })
         }
         else {
-            next(ErrorHandler.badRequest('Invalid Data'));
-            return;
+            return res.status(404).json({
+                message: 'User not found'
+            })
         }
-    }
-    catch (error) {
-        next(ErrorHandler.badRequest(error.message));
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Server error'
+        })
     }
 });
 
-const loginUser = asyncHandler(async (req, res, next) => {
-    const { email, password } = req.body;
-
-    // Include '+password' to explicitly select the password field
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
-        next(ErrorHandler.notFound('Email Not Found'));
-        return;
-    }
-
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-        next(ErrorHandler.notFound('Wrong Password'));
-        return;
-    }
-
-    if (isMatch) {
-        res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            token: generateToken(user)
-        });
-    }
-});
-
-const generateToken = (user) => {
-    return jwt.sign(
-        {
-            id: user._id,
-            isAdmin: user.isAdmin
-        },
-        process.env.JWT_SECRET,
-        {
-            expiresIn: '24h',
-        }
-    );
-};
-
-module.exports = { registerUser, loginUser };
+module.exports = {
+    viewUser,
+    getUser,
+    updateProfile,
+    updateLinks
+}

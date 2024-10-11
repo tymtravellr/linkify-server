@@ -22,12 +22,19 @@ const userSchema = new Schema({
             'Please add a valid email'
         ]
     },
+    password: {
+        type: String,
+        required: [true, 'Please add a password'],
+        minlength: 6,
+        select: false
+    },
     links: [{
         id: String,
         platform: String,
-        url: String,
-        valid: Boolean
-    }]
+        link: String,
+        valid: Boolean,
+        _id: false
+    }],
 }, {
     timestamps: true
 });
